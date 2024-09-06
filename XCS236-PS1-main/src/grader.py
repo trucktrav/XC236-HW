@@ -31,9 +31,9 @@ model.eval()
 
 ### BEGIN_HIDE ###
 ### END_HIDE ###
-
-#########
 # TESTS #
+#########
+
 #########
 
 class Test_6c(GradedTestCase):

@@ -16,6 +16,8 @@ def temperature_scale(logits, model, new_past, config, temperature, temperature_
         ##TODO:
         ## Return logits scaled by the temperature parameter
         ### START CODE HERE ###
+        # logits = logits / temperature
+        return logits / temperature
         ### END CODE HERE ###
         raise NotImplementedError
     # EXTRA CREDIT ONLY   
@@ -31,6 +33,7 @@ def temperature_scale(logits, model, new_past, config, temperature, temperature_
         # compute probability of first token
         first_probs = None
         ### START CODE HERE ###
+        first_probs = torch.softmax(logits, dim=1)
         ### END CODE HERE ###
 
         for t in range(config.vocab_size):
@@ -45,6 +48,15 @@ def temperature_scale(logits, model, new_past, config, temperature, temperature_
             # Don't forget to also do top-k filtering when computing probabilities for the second token
             joint_prob_t = None
             ### START CODE HERE ###
+            # jlogits, past = model(new_current_text, past=new_past)
+            # temp = top_k_logits(jlogits[:,-1,:], k=config.top_k)
+            # joint_prob_t = first_prob * torch.softmax(temp, dim=1)
+
+            jlogits, past = model(new_current_text, past=new_past)
+            temp = jlogits[:, -1, :]
+            temp2 = top_k_logits(temp, k=config.top_k)
+            joint_prob_t = first_prob * torch.softmax(temp2, dim=1)
+
             ### END CODE HERE ###
             joint_probs.append( joint_prob_t )
 
@@ -55,9 +67,20 @@ def temperature_scale(logits, model, new_past, config, temperature, temperature_
         # TODO: scale joint_logits by temperature, and compute first_logits by marginalizing out the second token dimension
         first_logits = None
         ### START CODE HERE ###
+        temp = joint_logits / temperature
+        temp2 = torch.sum(torch.exp(temp), dim=1)
+        first_logits = torch.log(temp2)
+#changew two2
+        # temp  = torch.sum(torch.exp(joint_logits / temperature) , dim=1)
+        # first_logits = torch.log(temp)
+        # temp = torch.sum(torch.exp(joint_logits / temperature), dim=1)
+        # joint_logits = torch.log(temp[first_tokens])
+
         ### END CODE HERE ###
 
         return_logits[0,first_tokens] = first_logits
+        # print(first_logits)
+        # print(torch.sum(return_logits))
         return return_logits
 
 def sample(model, start_text, config, length, temperature=None, temperature_horizon=1):
@@ -67,6 +90,7 @@ def sample(model, start_text, config, length, temperature=None, temperature_hori
     with torch.no_grad():
         for _ in trange(length):
             logits, new_past = model(current_text, past=past)
+            # logits, new_past = model(current_text)
             # Input parameters:
             #     current_text: the encoded text token at t-1
             #     past: the calculated hidden state of previous text or None if no previous text given
@@ -89,6 +113,15 @@ def sample(model, start_text, config, length, temperature=None, temperature_hori
             ##
             ## Note: It is expected that the code will throw an error until you've filled out the code block below.
             ### START CODE HERE ###
+            temp = torch.nn.functional.softmax(logits)
+            sampled_text = torch.multinomial(temp, num_samples=1)
+            # sampled_text = torch.multinomial(torch.softmax(logits, dim=1), num_samples=1)
+            output.append(sampled_text)
+            current_text = sampled_text
+            # sample = torch.softmax(sampled_text, dim=1)
+            # sample = torch.squeeze(sampled_text)
+            # current_text = torch.cat((current_text, sampled_text), dim=1)
+            # print(current_text.size())
             ### END CODE HERE ###
 
             past = new_past

@@ -17,5 +17,7 @@ def classification(model, text):
         ##       There should be NO model training involved.
 
         ### START CODE HERE ###
+        loss = log_likelihood(model, text)
+        return True if loss < -300 else False
         ### END CODE HERE ###
         raise NotImplementedError

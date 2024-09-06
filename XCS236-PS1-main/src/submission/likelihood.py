@@ -1,5 +1,7 @@
 import torch
 import torch.nn as nn
+from click.core import F
+
 
 def log_likelihood(model, text):
     """
@@ -25,5 +27,17 @@ def log_likelihood(model, text):
         ## Hint: Implementation should only takes 3~7 lines of code.
         
         ### START CODE HERE ###
+        logits, newpast = model(text, None)
+        # probs = torch.softmax(logits[:, -1, :], dim=-1)
+        celoss = nn.CrossEntropyLoss(reduction='sum')
+
+        i_logits = logits[0, :-1, :]
+        i_labels = text[0, 1:]
+        # loss = -1 * celoss(i_logits.view(-1, i_logits.size(-1)), i_labels.view(-1))
+        # loss = -1* celoss(logits[:, -1, :], torch.tensor([0]))
+
+        # loss_fn = nn.NLLLoss()
+        # loss = loss_fn(text, probs)
+        return -1 * celoss(i_logits, i_labels)
         ### END CODE HERE ###
         raise NotImplementedError

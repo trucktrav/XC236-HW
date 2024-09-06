@@ -102,18 +102,20 @@ def main():
 
     print("========= Question 6c =========")
     paper_iter = iter(paper_dataset)
-    with open(os.path.join(save_dir, 'samples.txt'), 'w', encoding='utf-8') as f:
+    with open(os.path.join(save_dir, 'samples_new.txt'), 'w', encoding='utf-8') as f:
         for i in range(5):
             ## Use paper abstracts as the starting text
             start_text = next(paper_iter)['abstract'][:100]
             start_text = codec.encode(start_text).to(device)
             ## TODO: Complete the code for the sample function within submission/sample.py
             text = sample(model, start_text, config, length=config.n_ctx // 2)
+            # text = sample(model, start_text, config, length=50)
             ## Decode samples
             text = codec.decode(text.tolist()[0])
             f.write('=' * 50 + " SAMPLE_{} ".format(i) + '=' * 50 + '\n')
             f.write(text + '\n')
     print("# Samples written to samples.txt.")
+
 
     print("========= Question 6d =========")
     ## TODO: Complete the code for the log_likelihood function within submission/likelihood.py
@@ -150,6 +152,7 @@ def main():
 
     print("========= Question 6h =========")
     paper_iter = iter(paper_dataset)
+    length = 100
     with open(os.path.join(save_dir, 'samples_temperature0-95_horizon2.txt'), 'w', encoding='utf-8') as f:
         for i in range(1):
             ## Use paper abstracts as the starting text
@@ -161,6 +164,7 @@ def main():
             text = codec.decode(text.tolist()[0])
             f.write('=' * 50 + " SAMPLE_{} ".format(i) + '=' * 50 + '\n')
             f.write(text + '\n')
+    # print(text)
     print("# Samples written to samples_temperature0-95_horizon2.txt.")
     return 0
 
