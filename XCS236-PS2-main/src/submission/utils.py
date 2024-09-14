@@ -54,6 +54,9 @@ def sample_gaussian(m, v):
     # consider an alternative using torch.randn_like: https://pytorch.org/docs/stable/generated/torch.randn_like.html
     ################################################################################
     ### START CODE HERE ###
+    # eps = torch.normal(0,1, m.size())
+    z = torch.randn_like(m) * torch.sqrt(v) + m
+    return z
     ### END CODE HERE ###
     ################################################################################
     # End of code modification
@@ -87,6 +90,13 @@ def log_normal(x, m, v):
     # the last dimension
     ################################################################################
     ### START CODE HERE ###
+    l_dim = len(x.size())-1
+    nor = torch.exp(-1*(x-m)**2/(2*v) )/ (np.sqrt(2*torch.pi) * (torch.sqrt(v)))
+    # em = log_mean_exp(x, l_dim)
+    ln = torch.log(nor)
+    temp = torch.sum(ln, l_dim)
+    # temp2 = log_sum_exp(ln, l_dim)
+    return temp
     ### END CODE HERE ###
     ################################################################################
     # End of code modification
@@ -112,6 +122,17 @@ def log_normal_mixture(z, m, v):
     # in the batch
     ################################################################################
     ### START CODE HERE ###
+    l_dim = len(z.size())-1
+    mix = l_dim-1 #len(m.size()-1-l_dim+1)
+    nor = torch.cat(
+        [torch.exp(-1 * (z - m[:, i,:]) ** 2 / (2 * v[:, i,:])) / (np.sqrt(2 * torch.pi) * (torch.sqrt(v[:, i,:]))) for i
+         in range(4)]).reshape(3,4,5)
+    sln = torch.sum(nor, dim=1) / 4.0
+    # nor = torch.sum(torch.exp(-(torch.log(z)-m)**2/(2*v**2) )/ (torch.sqrt(2*torch.pi) * v**2), dim=1) / z.size()[1]
+    # em = log_mean_exp(z, l_dim)
+    ln = torch.log(sln)
+    temp = torch.sum(ln, l_dim)
+    return temp
     ### END CODE HERE ###
     ################################################################################
     # End of code modification

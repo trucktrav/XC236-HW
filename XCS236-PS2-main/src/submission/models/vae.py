@@ -46,8 +46,32 @@ class VAE(nn.Module):
         #
         # Return:
         #   nelbo, kl, rec
+        # Args:
+        # qm: tensor: (batch, dim): q
+        # mean
+        # qv: tensor: (batch, dim): q
+        # variance
+        # pm: tensor: (batch, dim): p
+        # mean
+        # pv: tensor: (batch, dim): p
+        # variance
         ################################################################################
         ### START CODE HERE ###
+        kl = None
+        rec = None
+        qm, qv = self.enc(x)
+        zs = ut.sample_gaussian(qm, qv)
+        pxz = self.dec(zs)
+
+        kl = ut.kl_normal(qm, qv, self.z_prior_m, self.z_prior_v)
+        # rec = torch.mean(pxz, dim=-1)
+        # n = int(torch.randn(1) * 738)
+        # n = torch.randint(0,784,(1,1))
+        rec = -1* ut.log_bernoulli_with_logits(x, pxz)
+        nelbo = torch.mean(kl + rec, dim=-1)
+        kl = torch.mean(kl, dim=-1)
+        rec = torch.mean(rec, dim=-1)
+        return nelbo, kl, rec
         ### END CODE HERE ###
         ################################################################################
         # End of code modification
