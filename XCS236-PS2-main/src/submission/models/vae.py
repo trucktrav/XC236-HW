@@ -46,15 +46,6 @@ class VAE(nn.Module):
         #
         # Return:
         #   nelbo, kl, rec
-        # Args:
-        # qm: tensor: (batch, dim): q
-        # mean
-        # qv: tensor: (batch, dim): q
-        # variance
-        # pm: tensor: (batch, dim): p
-        # mean
-        # pv: tensor: (batch, dim): p
-        # variance
         ################################################################################
         ### START CODE HERE ###
         kl = None
@@ -68,7 +59,7 @@ class VAE(nn.Module):
         # n = int(torch.randn(1) * 738)
         # n = torch.randint(0,784,(1,1))
         rec = -1* ut.log_bernoulli_with_logits(x, pxz)
-        nelbo = torch.mean(kl + rec, dim=-1)
+        nelbo = torch.mean(kl + rec)
         kl = torch.mean(kl, dim=-1)
         rec = torch.mean(rec, dim=-1)
         return nelbo, kl, rec
@@ -107,6 +98,31 @@ class VAE(nn.Module):
         # calculating log_normal w.r.t prior and q
         ################################################################################
         ### START CODE HERE ###
+        # niwae = None
+        # kl = None
+        # rec = None
+        #
+        batch = x.shape[0]
+        xs = ut.duplicate(x, iw)
+        qm, qv = self.enc(xs)
+
+        zs = ut.sample_gaussian(qm, qv)
+        pxz = self.dec(zs)
+
+        recs = ut.log_bernoulli_with_logits(xs, pxz)
+
+        pms = self.z_prior[0].expand(qm.shape)
+        pvs = self.z_prior[1].expand(qv.shape)
+
+        kls = ut.log_normal(zs, pms, pvs) - ut.log_normal(zs, qm, qv)
+        logpt = recs + kls
+        temp = ut.log_mean_exp(logpt.reshape(iw, batch), 0)
+        niwae = -1.0 * torch.mean(temp)
+
+        kl = -1 * torch.mean(kls)
+        rec = -1* torch.mean(recs)
+        return niwae, kl, rec
+
         ### END CODE HERE ###
         ################################################################################
         # End of code modification

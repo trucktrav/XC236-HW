@@ -59,6 +59,26 @@ class GMVAE(nn.Module):
         # this object by checking its shape.
         prior = ut.gaussian_parameters(self.z_pre, dim=1)
         ### START CODE HERE ###
+        nelbo = None
+        kl = None
+        rec = None
+
+        qm, qv = self.enc(x)
+        zs = ut.sample_gaussian(qm, qv)
+        pxz = self.dec(zs)
+
+        qln = ut.log_normal(zs, qm, qv)
+        qlnm = ut.log_normal_mixture(zs, prior[0], prior[1])
+
+        kl = qln - qlnm
+        rec = -1 * ut.log_bernoulli_with_logits(x, pxz)
+        # kl = ut.log_mean_exp(kl, dim=-1)
+        # rec = ut.log_mean_exp(rec, dim=-1)
+        nelbo = torch.mean(kl + rec)
+        kl = torch.mean(kl)
+        rec = torch.mean(rec)
+
+        return nelbo, kl, rec
         ### END CODE HERE ###
         ################################################################################
         # End of code modification
@@ -93,6 +113,28 @@ class GMVAE(nn.Module):
         # this object by checking its shape.
         prior = ut.gaussian_parameters(self.z_pre, dim=1)
         ### START CODE HERE ###
+
+        batch = x.shape[0]
+        xs = ut.duplicate(x, iw)
+        qms, qvs = self.enc(xs)
+        zs = ut.sample_gaussian(qms, qvs)
+        pxz = self.dec(zs)
+
+        qln = ut.log_normal(zs, qms, qvs)
+        pms = prior[0]
+        pvs = prior[1]
+        qlnm = ut.log_normal_mixture(zs, pms, pvs)
+
+        kls = qln - qlnm
+        recs = ut.log_bernoulli_with_logits(xs, pxz)
+        logpt = recs - kls
+        temp = ut.log_mean_exp(logpt.reshape(iw, batch), 0)
+        niwae = -1.0 * torch.mean(temp)
+
+        kl = torch.mean(kls)
+        rec = -1 * torch.mean(recs)
+
+        return niwae, kl, rec
         ### END CODE HERE ###
         ################################################################################
         # End of code modification

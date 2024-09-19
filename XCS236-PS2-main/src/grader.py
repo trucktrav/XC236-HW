@@ -173,6 +173,11 @@ class Test_3b(GradedTestCase):
         torch.manual_seed(0)
         niwae_pred, _, _ = vae.negative_iwae_bound(x, iw=10)
 
+        gmvae = submission.models.gmvae.GMVAE(z_dim=10)
+        torch.manual_seed(0)
+        gmvae, _, _ = gmvae.negative_iwae_bound(x, iw=10)
+
+        print(niwae_pred, ref_vae_niwae)
         self.assertTrue(
             min_error(niwae_pred, ref_vae_niwae) < self.tol,
             f"Max absolute error in NIWAE-10 {min_error(niwae_pred, ref_vae_niwae)} > {self.tol}"

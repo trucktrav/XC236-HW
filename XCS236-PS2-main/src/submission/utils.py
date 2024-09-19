@@ -90,12 +90,8 @@ def log_normal(x, m, v):
     # the last dimension
     ################################################################################
     ### START CODE HERE ###
-    l_dim = len(x.size())-1
-    nor = torch.exp(-1*(x-m)**2/(2*v) )/ (np.sqrt(2*torch.pi) * (torch.sqrt(v)))
-    # em = log_mean_exp(x, l_dim)
-    ln = torch.log(nor)
-    temp = torch.sum(ln, l_dim)
-    # temp2 = log_sum_exp(ln, l_dim)
+    ln = -.5 * torch.log(2*torch.pi * v) - .5 *((x-m)**2)/v
+    temp = torch.sum(ln, -1)
     return temp
     ### END CODE HERE ###
     ################################################################################
@@ -122,17 +118,42 @@ def log_normal_mixture(z, m, v):
     # in the batch
     ################################################################################
     ### START CODE HERE ###
-    l_dim = len(z.size())-1
-    mix = l_dim-1 #len(m.size()-1-l_dim+1)
-    nor = torch.cat(
-        [torch.exp(-1 * (z - m[:, i,:]) ** 2 / (2 * v[:, i,:])) / (np.sqrt(2 * torch.pi) * (torch.sqrt(v[:, i,:]))) for i
-         in range(4)]).reshape(3,4,5)
-    sln = torch.sum(nor, dim=1) / 4.0
-    # nor = torch.sum(torch.exp(-(torch.log(z)-m)**2/(2*v**2) )/ (torch.sqrt(2*torch.pi) * v**2), dim=1) / z.size()[1]
+    # l_dim = len(z.size())-1
+    # mix = l_dim-1 #len(m.size()-1-l_dim+1)
+    # # nor = torch.exp(-1 * (x - m) ** 2 / (2 * v)) / (np.sqrt(2 * torch.pi) * (torch.sqrt(v)))
+    # mix = m.shape[-2]
+    # pi2 = np.sqrt(2 * torch.pi)
+    # temp = torch.zeros_like(z)
+    # # temp = torch.exp(-1 * (z - m) ** 2 / (2 * v)) / (pi2 * (torch.sqrt(v)))
+    # for i in range(mix):
+    #     temp += torch.exp(-1 * (z - m[:, i,:]) ** 2 / (2 * v[:, i,:])) / (mix * pi2 * (torch.sqrt(v[:, i,:])))
+    #
+    # mix = m.shape[-2]
+    # pi2 = np.sqrt(2 * torch.pi) * mix
+    # vs = torch.permute(v, (1,0,2))
+    # t1 = torch.exp(-1 * (z - torch.permute(m, (1,0,2))) ** 2 / (2 * vs)) / (pi2 * torch.sqrt(vs))
+    # ret = torch.sum(torch.log(torch.sum(t1, 0)), -1)
+
+    # mix = m.shape[-2]
+    # pi2 = np.sqrt(2 * torch.pi)
+    zs = torch.unsqueeze(z, 1)
+    # -.5 * torch.log(2 * torch.pi * v) - .5 * ((x - m) ** 2) / v
+    # t2 = torch.exp(-1 * (zs- m) ** 2 / (2 * v)) / (pi2 * torch.sqrt(v))
+    # ret2 = torch.sum(torch.log(torch.sum(t2, 1)), -1)
+    t3 = log_normal(zs, m, v)
+    r3 = log_mean_exp(t3, 1)
+    return r3
+
+    # nor = torch.sum(temp, -2)
+
+    # nor = torch.cat(
+    #     [torch.exp(-1 * (z - m[:, i,:]) ** 2 / (2 * v[:, i,:])) / (np.sqrt(2 * torch.pi) * (torch.sqrt(v[:, i,:]))) for i
+    #      in range(4)]).reshape(3,4,5)
+    # sln = torch.sum(nor, dim=1) / 4.0
+    # # nor = torch.sum(torch.exp(-(torch.log(z)-m)**2/(2*v**2) )/ (torch.sqrt(2*torch.pi) * v**2), dim=1) / z.size()[1]
     # em = log_mean_exp(z, l_dim)
-    ln = torch.log(sln)
-    temp = torch.sum(ln, l_dim)
-    return temp
+    # ln = torch.log(temp)
+    # temp = torch.sum(ln, -1)
     ### END CODE HERE ###
     ################################################################################
     # End of code modification
