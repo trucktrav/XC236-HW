@@ -73,6 +73,7 @@ class SSVAE(nn.Module):
         # HINT 4: Try making use of log_bernoulli_with_logits in your calculation of rec
         # from utils.py
         ################################################################################
+        batch = x.shape[0]
         y_logits = self.cls(x)
         y_logprob = F.log_softmax(y_logits, dim=1)
         y_prob = torch.softmax(y_logprob, dim=1) # (batch, y_dim)
@@ -83,6 +84,26 @@ class SSVAE(nn.Module):
         y = x.new(np.eye(self.y_dim)[y])
         x = ut.duplicate(x, self.y_dim)
         ### START CODE HERE ###
+        qm, qv = self.enc(x, y)
+        z = ut.sample_gaussian(qm, qv)
+        ptz = self.dec(z, y)
+
+        rec = ut.log_bernoulli_with_logits(x, ptz)
+        kl_z = ut.kl_normal(qm,  qv, self.z_prior_m, self.z_prior_v)
+        kl_y = ut.kl_cat(y_logits, y_logprob, y_prob)
+
+        # temp = y_prob.transpose(1,0) * (rec.reshape(self.y_dim,batch) - kl_z.reshape(self.y_dim,batch))
+        temp = y_prob * (rec.reshape(batch, self.y_dim) - kl_z.reshape(batch, self.y_dim))
+
+        # nelbo = -1 * torch.mean(torch.mean(temp, 0) + kl_y)
+        nelbo = -1 * torch.mean(torch.mean(temp, 1) + kl_y)
+
+        rec = -1 * torch.mean(rec)
+        kl_z = -1 * torch.mean(kl_z)
+        kl_y = -1 * torch.mean(kl_y)
+
+        return nelbo, kl_z, kl_y, rec
+
         ### END CODE HERE ###
         ################################################################################
         # End of code modification
